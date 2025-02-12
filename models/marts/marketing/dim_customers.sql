@@ -1,6 +1,6 @@
 {{
     config(
-        materialized='view'
+        materialized='table'
 
     )
 }}
@@ -31,6 +31,14 @@ customer_orders as (
 
 ),
 
+lifetime_value as (
+
+    select
+        customer_id,
+        amount
+    from {{ ref('fct_orders') }}
+),
+
 final as (
 
     select
@@ -39,11 +47,13 @@ final as (
         customers.last_name,
         customer_orders.first_order_date,
         customer_orders.most_recent_order_date,
-        coalesce(customer_orders.number_of_orders, 0) as number_of_orders
+        coalesce(customer_orders.number_of_orders, 0) as number_of_orders,
+        lifetime_value.amount as lifetime_value
 
     from customers
 
     left join customer_orders using (customer_id)
+    left join lifetime_value using (customer_id)
 
 )
 
